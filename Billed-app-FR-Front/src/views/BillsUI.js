@@ -19,10 +19,25 @@ const row = (bill) => {
     `)
   }
 
-const rows = (data) => {
-  return (data && data.length) ? data.map(bill => row(bill)).join("") : ""
-}
-
+  const rows = (data) => {
+    console.log(data)
+  
+    // Fonction pour convertir une chaîne de date en objet Date
+    const parseDate = (dateString) => {
+      const [day, monthAbbr, year] = dateString.split(' ')
+      const months = {
+        'Jan.': 0, 'Fév.': 1, 'Mar.': 2, 'Avr.': 3, 'Mai.': 4, 'Juin.': 5,
+        'Juil.': 6, 'Aoû.': 7, 'Sep.': 8, 'Oct.': 9, 'Nov.': 10, 'Déc.': 11
+      }
+      const month = months[monthAbbr]
+      const fullYear = 2000 + parseInt(year) // Supposons que les années sont dans les années 2000
+      return new Date(fullYear, month, parseInt(day))
+    }
+    const sortedData = data && data.length 
+      ? data.sort((a, b) => parseDate(b.date) - parseDate(a.date))
+      : []
+    return sortedData.map(bill => row(bill)).join("")
+  }
 export default ({ data: bills, loading, error }) => {
   
   const modal = () => (`

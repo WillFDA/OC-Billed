@@ -30,9 +30,23 @@ describe("Given I am connected as an employee", () => {
     })
     test("Then bills should be ordered from earliest to latest", () => {
       document.body.innerHTML = BillsUI({ data: bills })
-      const dates = screen.getAllByText(/^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$/i).map(a => a.innerHTML)
-      const antiChrono = (a, b) => ((a < b) ? 1 : -1)
-      const datesSorted = [...dates].sort(antiChrono)
+      const dates = screen.getAllByText(/^(0[1-9]|[12][0-9]|3[01]) [A-Za-zéû]{3,4}\. \d{2}$/i).map(a => a.innerHTML)
+      
+      // Fonction pour convertir une chaîne de date en objet Date
+      const parseDate = (dateString) => {
+        const [day, monthAbbr, year] = dateString.split(' ')
+        const months = {
+          'Jan.': 0, 'Fév.': 1, 'Mar.': 2, 'Avr.': 3, 'Mai.': 4, 'Juin': 5,
+          'Juil.': 6, 'Aoû.': 7, 'Sep.': 8, 'Oct.': 9, 'Nov.': 10, 'Déc.': 11
+        }
+        const month = months[monthAbbr]
+        const fullYear = 2000 + parseInt(year)
+        return new Date(fullYear, month, parseInt(day))
+      }
+    
+      // Trier les dates du plus récent au plus ancien
+      const datesSorted = [...dates].sort((a, b) => parseDate(b) - parseDate(a))
+      
       expect(dates).toEqual(datesSorted)
     })
   })

@@ -53,6 +53,7 @@ export const card = (bill) => {
 }
 
 export const cards = (bills) => {
+  console.log(bills)
   return bills && bills.length ? bills.map(bill => card(bill)).join("") : ""
 }
 
@@ -182,7 +183,7 @@ export default class {
       .bills()
       .update({data: JSON.stringify(bill), selector: bill.id})
       .then(bill => bill)
-      .catch(console.log)
+      .catch(console.log('error update bill'))
     }
   }
 }
