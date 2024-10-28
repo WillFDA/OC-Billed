@@ -71,7 +71,49 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted);
     });
 
-    describe("When I am on Bills Page and I click on the eye icon", () => {
+    describe("I click on new bill button", () => {
+      test("Then i should be redirected to the new bill page", () => {
+        Object.defineProperty(window, "localStorage", {
+          value: localStorageMock,
+        });
+        window.localStorage.setItem(
+          "user",
+          JSON.stringify({
+            type: "Employee",
+          })
+        );
+
+        // Simule le DOM de la page Bills
+        const html = BillsUI({ data: bills });
+        document.body.innerHTML = html;
+
+        // Mock la fonction de navigation
+        const onNavigate = jest.fn((pathname) => {
+          document.body.innerHTML = ROUTES({ pathname });
+        });
+
+        // Initialise l'instance de Bills
+        const billsContainer = new Bills({
+          document,
+          onNavigate,
+          store: null,
+          localStorage: window.localStorage,
+        });
+
+        const handleClickNewBill = jest.fn(() =>
+          billsContainer.handleClickNewBill()
+        );
+
+        const buttonNewBill = screen.getByTestId("btn-new-bill");
+        buttonNewBill.addEventListener("click", handleClickNewBill);
+
+        fireEvent.click(buttonNewBill);
+
+        expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH["NewBill"]);
+      });
+    });
+
+    describe("I click on the eye icon of a bill", () => {
       test("Then a modal should open displaying the bill image", () => {
         // Simule l'authentification en tant qu'employé
         Object.defineProperty(window, "localStorage", {
