@@ -2,11 +2,11 @@
  * @jest-environment jsdom
  */
 import { fireEvent, screen } from "@testing-library/dom";
-import NewBillUI from "../views/NewBillUI.js";
-import NewBill from "../containers/NewBill.js";
 import userEvent from "@testing-library/user-event";
 import { localStorageMock } from "../__mocks__/localStorage.js";
 import { ROUTES, ROUTES_PATH } from "../constants/routes.js";
+import NewBill from "../containers/NewBill.js";
+import NewBillUI from "../views/NewBillUI.js";
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on NewBill Page", () => {
@@ -187,6 +187,80 @@ describe("Given I am connected as an employee", () => {
         );
 
         alertMock.mockRestore();
+      });
+
+      test("Then file upload should work correctly", async () => {
+        const html = NewBillUI();
+        document.body.innerHTML = html;
+
+        // Mock store avec succès
+        const store = {
+          bills: jest.fn(() => ({
+            create: jest.fn().mockResolvedValue({
+              fileUrl: "http://localhost:3456/images/test.jpg",
+              key: "1234"
+            })
+          }))
+        };
+
+        const newBill = new NewBill({
+          document,
+          onNavigate: jest.fn(),
+          store,
+          localStorage: window.localStorage,
+        });
+
+        const input = screen.getByTestId("file");
+        const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+        
+        // Création d'un événement de changement de fichier
+        const event = {
+          preventDefault: jest.fn(),
+          target: {
+            value: 'C:\\fakepath\\test.jpg',
+            files: [file]
+          }
+        };
+
+        // Appel direct de handleChangeFile et attente de la résolution
+        await newBill.handleChangeFile(event);
+        
+        expect(newBill.fileUrl).toBe("http://localhost:3456/images/test.jpg");
+        expect(newBill.billId).toBe("1234");
+        expect(newBill.fileName).toBe("test.jpg");
+      });
+
+      test("Then file upload should handle errors", async () => {
+        const html = NewBillUI();
+        document.body.innerHTML = html;
+
+        // Mock store avec erreur
+        const store = {
+          bills: jest.fn(() => ({
+            create: jest.fn().mockRejectedValue(new Error("Upload failed"))
+          }))
+        };
+
+        const newBill = new NewBill({
+          document,
+          onNavigate: jest.fn(),
+          store,
+          localStorage: window.localStorage,
+        });
+
+        // Mock console.error
+        const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+        const input = screen.getByTestId("file");
+        const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+        
+        // Simulation du changement de fichier
+        await userEvent.upload(input, file);
+        
+        expect(consoleSpy).toHaveBeenCalled();
+        expect(input.value).toBe("");
+
+        consoleSpy.mockRestore();
       });
     });
   });
