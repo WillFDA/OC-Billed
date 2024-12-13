@@ -128,7 +128,7 @@ describe("Given I am connected as an employee", () => {
     });
 
     describe("When I handle file upload", () => {
-      test("Then it should accept valid image formats (JPG, JPEG, PNG)", () => {
+      test("Then it should validate file format and attach valid files", () => {
         const html = NewBillUI();
         document.body.innerHTML = html;
 
@@ -143,15 +143,21 @@ describe("Given I am connected as an employee", () => {
         const handleChangeFile = jest.fn((e) => newBill.handleChangeFile(e));
         input.addEventListener("change", handleChangeFile);
 
-        // Test valid PNG file
-        const validFile = new File(["image"], "test.png", {
-          type: "image/png",
-        });
-        userEvent.upload(input, validFile);
+        // Test valid formats
+        const validFormats = [
+          { name: 'test.jpg', type: 'image/jpeg' },
+          { name: 'test.jpeg', type: 'image/jpeg' },
+          { name: 'test.png', type: 'image/png' }
+        ];
 
-        expect(input.files[0]).toStrictEqual(validFile);
-        expect(input.files).toHaveLength(1);
-        expect(handleChangeFile).toHaveBeenCalled();
+        validFormats.forEach(format => {
+          const validFile = new File(['image'], format.name, { type: format.type });
+          userEvent.upload(input, validFile);
+
+          expect(input.files[0]).toStrictEqual(validFile);
+          expect(input.files).toHaveLength(1);
+          expect(handleChangeFile).toHaveBeenCalled();
+        });
       });
 
       test("Then it should reject invalid file formats", () => {
@@ -189,11 +195,10 @@ describe("Given I am connected as an employee", () => {
         alertMock.mockRestore();
       });
 
-      test("Then file upload should work correctly", async () => {
+      test("Then it should process the file upload through the store successfully", async () => {
         const html = NewBillUI();
         document.body.innerHTML = html;
 
-        // Mock store avec succès
         const store = {
           bills: jest.fn(() => ({
             create: jest.fn().mockResolvedValue({
@@ -213,7 +218,6 @@ describe("Given I am connected as an employee", () => {
         const input = screen.getByTestId("file");
         const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
         
-        // Création d'un événement de changement de fichier
         const event = {
           preventDefault: jest.fn(),
           target: {
@@ -222,7 +226,6 @@ describe("Given I am connected as an employee", () => {
           }
         };
 
-        // Appel direct de handleChangeFile et attente de la résolution
         await newBill.handleChangeFile(event);
         
         expect(newBill.fileUrl).toBe("http://localhost:3456/images/test.jpg");
@@ -230,11 +233,10 @@ describe("Given I am connected as an employee", () => {
         expect(newBill.fileName).toBe("test.jpg");
       });
 
-      test("Then file upload should handle errors", async () => {
+      test("Then it should handle store errors during file upload", async () => {
         const html = NewBillUI();
         document.body.innerHTML = html;
 
-        // Mock store avec erreur
         const store = {
           bills: jest.fn(() => ({
             create: jest.fn().mockRejectedValue(new Error("Upload failed"))
@@ -248,13 +250,11 @@ describe("Given I am connected as an employee", () => {
           localStorage: window.localStorage,
         });
 
-        // Mock console.error
         const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
         const input = screen.getByTestId("file");
         const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
         
-        // Simulation du changement de fichier
         await userEvent.upload(input, file);
         
         expect(consoleSpy).toHaveBeenCalled();
@@ -264,4 +264,5 @@ describe("Given I am connected as an employee", () => {
       });
     });
   });
+  
 });
