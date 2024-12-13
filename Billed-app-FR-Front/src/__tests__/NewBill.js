@@ -264,5 +264,188 @@ describe("Given I am connected as an employee", () => {
       });
     });
   });
-  
+  // POST
+  describe("When I submit a new bill with POST", () => {
+    test("Then the bill should be created successfully", async () => {
+      const html = NewBillUI();
+      document.body.innerHTML = html;
+
+      // Préparation du localStorage
+      Object.defineProperty(window, "localStorage", {
+        value: localStorageMock,
+      });
+      window.localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+          email: "employee@test.com"
+        })
+      );
+
+      // Mock du store avec succès
+      const store = {
+        bills: jest.fn(() => ({
+          create: jest.fn().mockResolvedValue({
+            fileUrl: "https://localhost:3456/images/test.jpg",
+            key: "1234"
+          }),
+          update: jest.fn().mockResolvedValue({})
+        }))
+      };
+
+      const onNavigate = jest.fn();
+      const newBill = new NewBill({
+        document,
+        onNavigate,
+        store,
+        localStorage: window.localStorage,
+      });
+
+      // Simulation du formulaire avec données
+      const formNewBill = screen.getByTestId("form-new-bill");
+      const handleSubmit = jest.fn(newBill.handleSubmit);
+      formNewBill.addEventListener("submit", handleSubmit);
+
+      // Remplissage du formulaire
+      fireEvent.change(screen.getByTestId("expense-type"), {
+        target: { value: "Transports" }
+      });
+      fireEvent.change(screen.getByTestId("expense-name"), {
+        target: { value: "Test Transport" }
+      });
+      fireEvent.change(screen.getByTestId("amount"), {
+        target: { value: "100" }
+      });
+      fireEvent.change(screen.getByTestId("datepicker"), {
+        target: { value: "2024-03-14" }
+      });
+      fireEvent.change(screen.getByTestId("vat"), {
+        target: { value: "20" }
+      });
+      fireEvent.change(screen.getByTestId("pct"), {
+        target: { value: "20" }
+      });
+      fireEvent.change(screen.getByTestId("commentary"), {
+        target: { value: "Test comment" }
+      });
+
+      // Simulation upload fichier
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const inputFile = screen.getByTestId("file");
+      await userEvent.upload(inputFile, file);
+
+      // Soumission du formulaire
+      await fireEvent.submit(formNewBill);
+
+      expect(handleSubmit).toHaveBeenCalled();
+      expect(store.bills).toHaveBeenCalled();
+      expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH["Bills"]);
+    });
+
+    test("Then it should handle API error on POST", async () => {
+      const html = NewBillUI();
+      document.body.innerHTML = html;
+
+      // Préparation du localStorage
+      Object.defineProperty(window, "localStorage", {
+        value: localStorageMock,
+      });
+      window.localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+          email: "employee@test.com"
+        })
+      );
+
+      // Mock du store avec erreur
+      const store = {
+        bills: jest.fn(() => ({
+          create: jest.fn().mockRejectedValue(new Error("Erreur 404")),
+          update: jest.fn().mockRejectedValue(new Error("Erreur 404"))
+        }))
+      };
+
+      // Mock de console.error
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+      const newBill = new NewBill({
+        document,
+        onNavigate: jest.fn(),
+        store,
+        localStorage: window.localStorage,
+      });
+
+      // Simulation du formulaire avec données
+      const formNewBill = screen.getByTestId("form-new-bill");
+      const handleSubmit = jest.fn(newBill.handleSubmit);
+      formNewBill.addEventListener("submit", handleSubmit);
+
+      // Remplissage du formulaire
+      fireEvent.change(screen.getByTestId("expense-type"), {
+        target: { value: "Transports" }
+      });
+      fireEvent.change(screen.getByTestId("expense-name"), {
+        target: { value: "Test Transport" }
+      });
+      fireEvent.change(screen.getByTestId("amount"), {
+        target: { value: "100" }
+      });
+      fireEvent.change(screen.getByTestId("datepicker"), {
+        target: { value: "2024-03-14" }
+      });
+      fireEvent.change(screen.getByTestId("vat"), {
+        target: { value: "20" }
+      });
+      fireEvent.change(screen.getByTestId("pct"), {
+        target: { value: "20" }
+      });
+      fireEvent.change(screen.getByTestId("commentary"), {
+        target: { value: "Test comment" }
+      });
+
+      // Simulation upload fichier
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const inputFile = screen.getByTestId("file");
+      await userEvent.upload(inputFile, file);
+
+      // Soumission du formulaire
+      await fireEvent.submit(formNewBill);
+
+      expect(handleSubmit).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    test("Then it should handle network error", async () => {
+      const html = NewBillUI();
+      document.body.innerHTML = html;
+
+      // Simulation d'une erreur réseau
+      const store = {
+        bills: jest.fn(() => ({
+          create: jest.fn().mockRejectedValue(new Error("Network error")),
+          update: jest.fn().mockRejectedValue(new Error("Network error"))
+        }))
+      };
+
+      // Mock de console.error
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+      const newBill = new NewBill({
+        document,
+        onNavigate: jest.fn(),
+        store,
+        localStorage: window.localStorage,
+      });
+
+      // Simulation upload fichier avec erreur réseau
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const inputFile = screen.getByTestId("file");
+      await userEvent.upload(inputFile, file);
+
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
 });
