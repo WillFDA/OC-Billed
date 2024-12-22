@@ -1,8 +1,8 @@
 import { formatDate } from '../app/format.js'
-import DashboardFormUI from '../views/DashboardFormUI.js'
 import BigBilledIcon from '../assets/svg/big_billed.js'
 import { ROUTES_PATH } from '../constants/routes.js'
 import USERS_TEST from '../constants/usersTest.js'
+import DashboardFormUI from '../views/DashboardFormUI.js'
 import Logout from "./Logout.js"
 
 export const filteredBills = (data, status) => {
@@ -131,6 +131,7 @@ export default class {
   }
 
   handleShowTickets(e, bills, index) {
+    // this counter était unique pour chaque alors que c'est 3 index différent donc un objet avec chaque counter son index
     if (!this.counters) this.counters = {};
     if (!this.counters[index]) this.counters[index] = 0;
     if (this.index === undefined || this.index !== index) this.index = index
@@ -147,6 +148,7 @@ export default class {
     }
     
     bills.forEach(bill => {
+      // on ne pouvait pas cliquer sur certain ticket car on avait des duplication d'événement 
       $(`#open-bill${bill.id}`).off('click');
       $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
     })
